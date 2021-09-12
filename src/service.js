@@ -1,4 +1,4 @@
-import { createUsersTable, createProductsTable, createListsTable, createProductsInListsTable } from './queries';
+const { createUsersTable, createProductsTable, createListsTable, createProductsInListsTable } = require('./queries');
 
 function formatDate(date = new Date()) {
     const d = new Date(date),
@@ -13,7 +13,7 @@ function formatDate(date = new Date()) {
     return [year, month, day].join('-');
 }
 
-export const createTables = async (db) => {
+const createTables = async (db) => {
     return new Promise(function(resolve,reject){
         db.run(createUsersTable, (err) => {
             if (err) {
@@ -57,7 +57,7 @@ export const createTables = async (db) => {
         
 }
 
-export const getUser = async (db, id) => {
+const getUser = async (db, id) => {
     return new Promise(function(resolve,reject){
         db.get(`SELECT * FROM users where id = ?`, [id], function(err,rows){
                 if(err){return reject(err);}
@@ -67,7 +67,7 @@ export const getUser = async (db, id) => {
 }
 
 // Products
-export const getProduct = async (db, id) => {
+const getProduct = async (db, id) => {
     return new Promise(function(resolve,reject){
         db.get(`SELECT * FROM products WHERE id = ?`, [id], function(err,rows){
                 if(err){return reject(err);}
@@ -76,7 +76,7 @@ export const getProduct = async (db, id) => {
     });
 }
 
-export const getAllProducts = async (db, id) => {
+const getAllProducts = async (db, id) => {
     return new Promise(function(resolve,reject){
         db.all(`SELECT * FROM products WHERE user_id = ?`, [id], function(err,rows){
                 if(err){return reject(err);}
@@ -85,7 +85,7 @@ export const getAllProducts = async (db, id) => {
     });
 }
 
-export const addProduct = async(db, { name, url, description, category }, user_id = 1) => {
+const addProduct = async(db, { name, url, description, category }, user_id = 1) => {
     return new Promise(function(resolve,reject){
         db.all(`INSERT INTO products (name, category, description, url, user_id) VALUES (?,?,?,?,?)`, [name, category, description, url, user_id], function(err,rows){
                 if(err){return reject(err);}
@@ -94,7 +94,7 @@ export const addProduct = async(db, { name, url, description, category }, user_i
     });
 }
 
-export const deleteProduct = async(db, id) => {
+const deleteProduct = async(db, id) => {
     const date = formatDate(new Date());
     return new Promise(function(resolve,reject){
         db.all(`UPDATE products SET deleted_at = ? WHERE id = ?`, [id], function(err,rows){
@@ -105,7 +105,7 @@ export const deleteProduct = async(db, id) => {
 }
 
 // Lists
-export const getList = async (db, id) => {
+const getList = async (db, id) => {
     return new Promise(function(resolve,reject){
         db.get(`SELECT * FROM lists WHERE id = ?`, [id], function(err,row){
             if(err){return reject(err);}
@@ -117,7 +117,7 @@ export const getList = async (db, id) => {
     });
 }
 
-export const getActiveList = async(db, user_id = 1) => {
+const getActiveList = async(db, user_id = 1) => {
     return new Promise(function(resolve,reject){
         db.get(`SELECT * FROM lists WHERE user_id = ? AND state = ?`, [user_id, 'active'], function(err,row){
             db.get(`SELECT a.id, a.units, a.completed, a.product_id, b.id, b.name FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE list_id = ?`, [row.id], function(err,rows){
@@ -128,7 +128,7 @@ export const getActiveList = async(db, user_id = 1) => {
     });
 }
 
-export const updateListState = async(db, id, state) => {
+const updateListState = async(db, id, state) => {
     return new Promise(function(resolve,reject){
         db.all(`UPDATE lists SET state = ? WHERE id = ?`, [id, state], function(err,rows){
                 if(err){return reject(err);}
@@ -137,7 +137,7 @@ export const updateListState = async(db, id, state) => {
     });
 }
 
-export const getAllLists = async(db, user_id = 1) => {
+const getAllLists = async(db, user_id = 1) => {
     return new Promise(function(resolve,reject){
         db.all(`SELECT * FROM lists where user_id = ?`, [user_id], function(err,rows){
             if(err){return reject(err);}
@@ -146,7 +146,7 @@ export const getAllLists = async(db, user_id = 1) => {
     });
 }
 
-export const getTopCategories = async(db, user_id = 1) => {
+const getTopCategories = async(db, user_id = 1) => {
     return new Promise(function(resolve,reject){  
         db.get(`SELECT COUNT(b.id) AS count FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE user_id = ?`, [user_id], function(err,rows){
             if(err){return reject(err);}
@@ -159,7 +159,7 @@ export const getTopCategories = async(db, user_id = 1) => {
     });
 }
 
-export const getTopItems = async(db, user_id = 1) => {
+const getTopItems = async(db, user_id = 1) => {
     return new Promise(function(resolve,reject){  
         db.get(`SELECT COUNT(b.id) AS count FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE user_id = ?`, [user_id], function(err,rows){
             if(err){return reject(err);}
@@ -173,11 +173,27 @@ export const getTopItems = async(db, user_id = 1) => {
 }
 
 // all of this year
-export const getMonthlyStatistics = async(db, user_id = 1) => {
+const getMonthlyStatistics = async(db, user_id = 1) => {
     return new Promise(function(resolve,reject){  
         const year = String(new Date().getFullYear());
         db.all(`SELECT strftime('%m', b.updated_at) AS month, COUNT(a.id) AS items FROM productsInLists a LEFT JOIN lists b ON a.list_id=b.id WHERE user_id = ? AND strftime('%Y', b.updated_at) = ? GROUP BY strftime('%m', b.updated_at)`, [user_id, year], function(err,rows){
             resolve(rows);
         });
     });  
+}
+
+module.exports = {
+    createTables,
+    getUser,
+    getProduct,
+    getAllProducts,
+    addProduct,
+    deleteProduct,
+    getList,
+    getActiveList,
+    getAllLists,
+    updateListState,
+    getTopCategories,
+    getTopItems,
+    getMonthlyStatistics
 }

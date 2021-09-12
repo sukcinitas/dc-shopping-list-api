@@ -1,5 +1,5 @@
 // create tables
-export const createProductsTable = 'CREATE TABLE products( \
+const createProductsTable = 'CREATE TABLE products( \
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
     name VARCHAR(255) UNIQUE NOT NULL,\
     category VARCHAR(255)  NOT NULL,\
@@ -10,7 +10,7 @@ export const createProductsTable = 'CREATE TABLE products( \
     FOREIGN KEY(user_id) REFERENCES users(id)\
 )'
 
-export const createListsTable = 'CREATE TABLE lists( \
+const createListsTable = 'CREATE TABLE lists( \
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
     name VARCHAR(255) UNIQUE NOT NULL,\
     state VARCHAR(255) NOT NULL,\
@@ -19,7 +19,7 @@ export const createListsTable = 'CREATE TABLE lists( \
     FOREIGN KEY(user_id) REFERENCES users(id)\
 )'
 
-export const createProductsInListsTable = 'CREATE TABLE productsInLists( \
+const createProductsInListsTable = 'CREATE TABLE productsInLists( \
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
     units INTEGER,\
     list_id INTEGER,\
@@ -28,9 +28,16 @@ export const createProductsInListsTable = 'CREATE TABLE productsInLists( \
     FOREIGN KEY(list_id) REFERENCES lists(id)\
 )'
 
-export const createUsersTable = 'CREATE TABLE users( \
+const createUsersTable = 'CREATE TABLE users( \
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
     username VARCHAR(255) NOT NULL,\
     password VARCHAR(255) NOT NULL,\
     email VARCHAR(255) NOT NULL\
 )'
+
+module.exports = {
+    createProductsTable,
+    createListsTable,
+    createProductsInListsTable,
+    createUsersTable
+}

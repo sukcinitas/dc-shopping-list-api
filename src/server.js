@@ -19,7 +19,7 @@ app.all('*', function (req, res) {
 
 database.createDbTables();
 
-const HTTP_PORT = 8000;
-app.listen(HTTP_PORT, () => {
-    console.log('Server is listening on port ' + HTTP_PORT);
+const port = process.env.PORT || 8000;
+app.listen(port, () => {
+    console.log('Server is listening on port ' + port);
 });

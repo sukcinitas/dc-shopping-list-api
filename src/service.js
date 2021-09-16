@@ -1,3 +1,4 @@
+const { Database } = require('sqlite3');
 const { createUsersTable, createProductsTable, createListsTable, createProductsInListsTable } = require('./queries');
 
 function formatDate(date = new Date()) {
@@ -37,7 +38,7 @@ const createTables = async (db) => {
                 return reject(err);
             }
             let insert = 'INSERT INTO lists (name, state, user_id, updated_at) VALUES (?,?,?, ?)';
-            db.run(insert, ['Pirmadienio apsipirkimas', 'completed', 1, formatDate('2020-04-05')]);
+            db.run(insert, ['Pirmadienio apsipirkimas', 'completed', 1, formatDate('2021-04-05')]);
             db.run(insert, ['Antradienio apsipirkimas', 'cancelled', 1, formatDate()]);
             db.run(insert, ['Tiesiausias kelias per grybus', 'active', 1, formatDate()]);
         });
@@ -46,11 +47,10 @@ const createTables = async (db) => {
                 return reject(err);
             }
             let insert = 'INSERT INTO productsInLists (units, list_id, product_id, completed) VALUES (?,?,?,?)';
-            db.run(insert, [4, 1, 1, 1]);
-            db.run(insert, [4, 2, 1, 1]);
-            db.run(insert, [4, 3, 4, 1]);
-            db.run(insert, [4, 4, 2, 1]);
-            db.run(insert, [4, 4, 3, 1]);
+            db.run(insert, [1, 1, 1, "1"]);
+            db.run(insert, [2, 1, 2, "1"]);
+            db.run(insert, [3, 2, 1, "1"]);
+            db.run(insert, [5, 3, 4, "1"]);
         });
         resolve('Tables created successfully!')
     });
@@ -89,7 +89,10 @@ const addProduct = async(db, { name, url, description, category }, user_id = 1) 
     return new Promise(function(resolve,reject){
         db.all(`INSERT INTO products (name, category, description, url, user_id) VALUES (?,?,?,?,?)`, [name, category, description, url, user_id], function(err,rows){
                 if(err){return reject(err);}
-                resolve(rows);
+                db.get('SELECT last_insert_rowid()', function(err, id) {
+                    if(err){return reject(err);}
+                    resolve(id);
+                })
             });
     });
 }
@@ -97,7 +100,7 @@ const addProduct = async(db, { name, url, description, category }, user_id = 1) 
 const deleteProduct = async(db, id) => {
     const date = formatDate(new Date());
     return new Promise(function(resolve,reject){
-        db.all(`UPDATE products SET deleted_at = ? WHERE id = ?`, [id], function(err,rows){
+        db.all(`UPDATE products SET deleted_at = ? WHERE id = ?`, [date, id], function(err,rows){
                 if(err){return reject(err);}
                 resolve(rows);
             });
@@ -109,20 +112,60 @@ const getList = async (db, id) => {
     return new Promise(function(resolve,reject){
         db.get(`SELECT * FROM lists WHERE id = ?`, [id], function(err,row){
             if(err){return reject(err);}
-            db.get(`SELECT a.id, a.units, a.completed, a.product_id, b.id, b.name FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE list_id = ?`, [row.id], function(err,rows){
+            db.all(`SELECT a.id, a.units AS pieces, a.completed, b.id, b.name, b.description, b.url, b.category FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE list_id = ?`, [row.id], function(err,rows){
                 if(err){return reject(err);}
-                resolve({...row, items: rows});
+                resolve({...row, items: rows.map((item) => ({...item, completed: Boolean(parseInt(item.completed)) }))});
             });
         });
+    });
+}
+
+const addOrUpdateListAndProductsInList = async(db, { name, state, id, items }, user_id = 1) => {
+    return new Promise(function(resolve,reject){
+        const items2 = [];
+        db.all(`REPLACE INTO lists (name, state, id, updated_at, user_id) VALUES (?,?,?,?,?)`, [name, state, id, formatDate(new Date()), user_id], function(err,rows){
+                if(err){return reject(err);}
+                db.get('SELECT last_insert_rowid()', function(err, insert_id) {
+                    if(err){return reject(err);}
+                    const flatItems = items.map(({ id, units, product_id, completed, name, category }) => [id, units, product_id, completed, insert_id['last_insert_rowid()'], name, category]);
+                    db.serialize(function(){
+                        flatItems.forEach((item) => {
+                            db.run('REPLACE INTO productsInLists (id, units, product_id, completed, list_id) VALUES (?,?,?,?,?)', [...item.slice(0, 4), insert_id['last_insert_rowid()']], function(err){
+                                if(err) throw err;
+                            });
+                        });
+                        db.all(`SELECT a.id, a.units AS pieces, a.completed, b.id as product_id, b.name, b.description, b.category FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE list_id = ?`, [insert_id['last_insert_rowid()']], function(err,rows){
+                            if(err){return reject(err);}
+                            resolve({
+                                list: {name, state, id: insert_id['last_insert_rowid()'], items: rows.map((item) => ({...item, completed: Boolean(parseInt(item.completed)) }))}
+                            })
+                        });
+                    });
+                });
+        });
+    });
+}
+
+const toggleProductInListCompletion = async(db, list_id, id, completed) => {
+    return new Promise(function(resolve,reject){
+        db.all(`UPDATE productsInLists SET completed = ? WHERE id = ?`, [String(completed), id], function(err,rows){
+                if(err){return reject(err);}
+                resolve(rows);
+            });
     });
 }
 
 const getActiveList = async(db, user_id = 1) => {
     return new Promise(function(resolve,reject){
         db.get(`SELECT * FROM lists WHERE user_id = ? AND state = ?`, [user_id, 'active'], function(err,row){
-            db.get(`SELECT a.id, a.units, a.completed, a.product_id, b.id, b.name FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE list_id = ?`, [row.id], function(err,rows){
+            if(err){return reject(err);}
+            if(!row) {
+                resolve({});
+                return;
+            }
+            db.all(`SELECT a.id, a.units AS pieces, a.completed, b.id as product_id, b.name, b.category FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE list_id = ?`, [row.id], function(err,rows){
                 if(err){return reject(err);}
-                resolve({...row, items: rows});
+                resolve({...row, items: rows.map((item) => ({...item, completed: Boolean(parseInt(item.completed)) }))});
             });
         });
     });
@@ -130,7 +173,7 @@ const getActiveList = async(db, user_id = 1) => {
 
 const updateListState = async(db, id, state) => {
     return new Promise(function(resolve,reject){
-        db.all(`UPDATE lists SET state = ? WHERE id = ?`, [id, state], function(err,rows){
+        db.all(`UPDATE lists SET state = ? WHERE id = ?`, [state, id], function(err,rows){
                 if(err){return reject(err);}
                 resolve(rows);
             });
@@ -151,7 +194,7 @@ const getTopCategories = async(db, user_id = 1) => {
         db.get(`SELECT COUNT(b.id) AS count FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE user_id = ?`, [user_id], function(err,rows){
             if(err){return reject(err);}
                 const sum = rows.count;
-                db.all(`SELECT b.category, COUNT(b.category) * 100 / ? AS percent FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE user_id = ? GROUP BY b.category LIMIT 5`, [sum, user_id], function(err,rows){
+                db.all(`SELECT b.category AS name, COUNT(b.category) * 100 / ? AS percent FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE user_id = ? GROUP BY b.category LIMIT 3`, [sum, user_id], function(err,rows){
                     if(err){return reject(err);}
                         resolve(rows);
                     });
@@ -164,7 +207,7 @@ const getTopItems = async(db, user_id = 1) => {
         db.get(`SELECT COUNT(b.id) AS count FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE user_id = ?`, [user_id], function(err,rows){
             if(err){return reject(err);}
                 const sum = rows.count;
-                db.all(`SELECT b.name, COUNT(b.name) * 100 / ? AS percent FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE user_id = ? GROUP BY b.name LIMIT 5`, [sum, user_id], function(err,rows){
+                db.all(`SELECT b.name, COUNT(b.name) * 100 / ? AS percent FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE user_id = ? GROUP BY b.name LIMIT 3`, [sum, user_id], function(err,rows){
                     if(err){return reject(err);}
                         resolve(rows);
                     });
@@ -192,8 +235,10 @@ module.exports = {
     getList,
     getActiveList,
     getAllLists,
+    toggleProductInListCompletion,
     updateListState,
     getTopCategories,
     getTopItems,
-    getMonthlyStatistics
+    getMonthlyStatistics,
+    addOrUpdateListAndProductsInList
 }

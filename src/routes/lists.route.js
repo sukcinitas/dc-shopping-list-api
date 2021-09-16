@@ -13,6 +13,16 @@ router.get('/active', async (req, res, next) => {
     }
 });
 
+router.put('/save-list', async (req, res, next) => {
+    try {
+        const result = await service.addOrUpdateListAndProductsInList(db, req.body);
+        res.status(200).json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500);
+    }
+});
+
 router.get('/:id', async (req, res, next) => {
     try {
         const result = await service.getList(db, req.params.id);
@@ -22,6 +32,17 @@ router.get('/:id', async (req, res, next) => {
         res.status(500);
     }
 });
+
+router.put('/:id/toggle-item-completion', async (req, res, next) => {
+    try {
+        await service.toggleProductInListCompletion(db, req.params.id, req.body.id, req.body.completed);
+        res.status(200).json({message: 'Item has been successfully updated!'});
+    } catch (err) {
+        console.error(err);
+        res.status(500);
+    }
+});
+
 
 router.put('/:id', async (req, res, next) => {
     try {

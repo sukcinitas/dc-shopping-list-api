@@ -25,7 +25,7 @@ const createProductsInListsTable = 'CREATE TABLE productsInLists( \
     list_id INTEGER,\
     product_id INTEGER,\
     completed VARCHAR(255),\
-    FOREIGN KEY(list_id) REFERENCES lists(id)\
+    FOREIGN KEY(list_id) REFERENCES lists(id) ON UPDATE CASCADE\
 )'
 
 const createUsersTable = 'CREATE TABLE users( \

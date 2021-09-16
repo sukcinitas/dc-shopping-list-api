@@ -7,9 +7,12 @@ const database = require('./database');
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+// app.use(cors({
+//     origin: process.env.NODE_ENV === 'production' ? process.env.ORIGIN : 'http://localhost:4000',
+// }));
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' ? process.env.ORIGIN : 'http://localhost:4000',
-  }));
+    origin: "*"
+}));
 
 app.use('/api', require('./routes'));
 

@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const service = require('../service');
+const service = require('../services/statistics.service');
 const { db } = require('../database');
 
 router.get('/top-categories', async (req, res, next) => {

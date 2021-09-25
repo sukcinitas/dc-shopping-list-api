@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const service = require('../service');
+const service = require('../services/lists.service');
 const { db } = require('../database');
 
 // Lists

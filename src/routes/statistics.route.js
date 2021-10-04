@@ -8,7 +8,7 @@ router.get('/top-categories', async (req, res, next) => {
         res.status(200).json(ans);
     } catch (err) {
         console.error(err);
-        res.status(400);
+        res.status(500);
     }
 });
 
@@ -18,7 +18,7 @@ router.get('/top-items', async (req, res, next) => {
         res.status(200).json(ans);
     } catch (err) {
         console.error(err);
-        res.status(400);
+        res.status(500);
     }
 });
 
@@ -28,7 +28,7 @@ router.get('/monthly-statistics', async (req, res, next) => {
         res.status(200).json(ans);
     } catch (err) {
         console.error(err);
-        res.status(400);
+        res.status(500);
     }
 });
 

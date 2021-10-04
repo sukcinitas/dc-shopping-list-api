@@ -8,7 +8,7 @@ router.get('/', async (req, res, next) => {
         res.status(200).json(result);
     } catch (err) {
         console.error(err);
-        res.status(400).end();
+        res.status(500).end();
     }
 });
 
@@ -18,7 +18,7 @@ router.get('/:id', async (req, res, next) => {
         res.status(200).json(result);
     } catch (err) {
         console.error(err);
-        res.status(400).end();
+        res.status(500).end();
     }
 });
 
@@ -28,7 +28,13 @@ router.post('/', async (req, res) => {
         res.status(200).json({ id: result['last_insert_rowid()'] });
     } catch (err) {
         console.error(err);
-        res.status(400).end();
+        if (err.errno === 19) {
+            res.status(400).json({
+                message: "Name must be unique!"
+            }).end();
+            return;
+        }
+        res.status(500).end();
     }
 });
 
@@ -38,7 +44,7 @@ router.delete('/:id', async (req, res) => {
         res.status(200).end();
     } catch (err) {
         console.error(err);
-        res.status(400);
+        res.status(500);
     }
 });
 

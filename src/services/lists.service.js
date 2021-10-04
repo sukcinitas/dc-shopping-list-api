@@ -1,4 +1,4 @@
-import formatDate from '../util/formatDate';
+const formatDate = require('../util/formatDate');
 
 const getList = async (db, id) => {
     return new Promise(function(resolve,reject){

@@ -8,7 +8,7 @@ router.get('/users/:id', async (req, res, next) => {
         res.status(200).json(ans);
     } catch (err) {
         console.error(err);
-        res.status(400);
+        res.status(500);
     }
 });
 

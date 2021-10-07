@@ -21,8 +21,9 @@ const addOrUpdateListAndProductsInList = async(db, { name, state, id, items }, u
                     if(err){return reject(err);}
                     const flatItems = items.map(({ id, units, product_id, completed, name, category }) => [id, units, product_id, completed, insert_id['last_insert_rowid()'], name, category]);
                     db.serialize(function(){
+                        db.all(`DELETE FROM productsInLists WHERE list_id = ?`, [id]);
                         flatItems.forEach((item) => {
-                            db.run('REPLACE INTO productsInLists (id, units, product_id, completed, list_id) VALUES (?,?,?,?,?)', [...item.slice(0, 4), insert_id['last_insert_rowid()']], function(err){
+                            db.run('INSERT INTO productsInLists (id, units, product_id, completed, list_id) VALUES (?,?,?,?,?)', [...item.slice(0, 4), insert_id['last_insert_rowid()']], function(err){
                                 if(err) throw err;
                             });
                         });

@@ -27,7 +27,21 @@ router.post('/', async (req, res) => {
         const result = await service.addProduct(db, req.body);
         res.status(200).json({ id: result['last_insert_rowid()'] });
     } catch (err) {
-        console.error(err);
+        if (err.errno === 19) {
+            res.status(400).json({
+                message: "Name must be unique!"
+            }).end();
+            return;
+        }
+        res.status(500).end();
+    }
+});
+
+router.put('/:id', async (req, res) => {
+    try {
+        const result = await service.editProduct(db, req.body, Number(req.params.id));
+        res.status(200).json({ id: result['last_insert_rowid()'] });
+    } catch (err) {
         if (err.errno === 19) {
             res.status(400).json({
                 message: "Name must be unique!"

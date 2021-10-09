@@ -30,6 +30,15 @@ const addProduct = async(db, { name, url, description, category }, user_id = 1) 
     });
 }
 
+const editProduct = async(db, { name, url, description, category }, id, user_id = 1) => {
+    return new Promise(function(resolve,reject){
+        db.all(`UPDATE products SET name = ?, category = ?, description = ?, url = ?, user_id = ? WHERE id = ?`, [name, category, description, url, user_id, id], function(err,rows){
+                if(err){return reject(err);}
+                    resolve(id);
+            });
+    });
+}
+
 const deleteProduct = async(db, id) => {
     const date = formatDate(new Date());
     return new Promise(function(resolve,reject){
@@ -45,5 +54,6 @@ module.exports = {
     getProduct,
     getAllProducts,
     addProduct,
+    editProduct,
     deleteProduct,
 }

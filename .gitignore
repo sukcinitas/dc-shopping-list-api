@@ -1,3 +1,4 @@
 node_modules
+emp_database.db
 *.env
 

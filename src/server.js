@@ -17,7 +17,9 @@ app.all('*', function (req, res) {
     res.status(404).send('Not found!');
 });
 
-database.createDbTables();
+if (process.env.NODE_ENV !== 'production') {
+    database.createDbTables();
+}
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {

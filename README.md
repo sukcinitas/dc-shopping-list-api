@@ -1,6 +1,7 @@
 # DC Shopping List Api
 
-Complementary API to [dc-shopping-list](https://github.com/sukcinitas/dc-shopping-list) app which you can try out [here](https://shlist.netlify.app/).
+Complementary API to [dc-shopping-list](https://github.com/sukcinitas/dc-shopping-list) app which you can try out [here](https://shlist.netlify.app/). 
+Note: I hosted this on Heroku, however SQLite is bad fit for Heroku as its database file is stored on disk. Heroku filesystem's content is cleared periodically, so one cannot expect for the changes to be kept for long. I may use another RDMS in the future.
 
 ---
 

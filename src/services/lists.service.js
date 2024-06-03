@@ -1,92 +1,119 @@
-const formatDate = require('../util/formatDate');
+const formatDate = require("../util/formatDate");
 
-const getList = async (db, id) => {
-    return new Promise(function(resolve,reject){
-        db.get(`SELECT * FROM lists WHERE id = ?`, [id], function(err,row){
-            if(err){return reject(err);}
-            db.all(`SELECT a.id, a.units AS pieces, a.completed, b.id, b.name, b.description, b.url, b.category FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE list_id = ?`, [row.id], function(err,rows){
-                if(err){return reject(err);}
-                resolve({...row, items: rows.map((item) => ({...item, completed: Boolean(parseInt(item.completed)) }))});
-            });
-        });
-    });
-}
+const getList = (db, list_id) => {
+  const row = db.prepare(`SELECT * FROM lists WHERE list_id = ?`).get(list_id);
 
-const addOrUpdateListAndProductsInList = async(db, { name, state, id, items }, user_id = 1) => {
-    return new Promise(function(resolve,reject){
-        const items2 = [];
-        db.all(`REPLACE INTO lists (name, state, id, updated_at, user_id) VALUES (?,?,?,?,?)`, [name, state, id, formatDate(new Date()), user_id], function(err,rows){
-                if(err){return reject(err);}
-                db.get('SELECT last_insert_rowid()', function(err, insert_id) {
-                    if(err){return reject(err);}
-                    const flatItems = items.map(({ id, units, product_id, completed, name, category }) => [id, units, product_id, completed, insert_id['last_insert_rowid()'], name, category]);
-                    db.serialize(function(){
-                        db.all(`DELETE FROM productsInLists WHERE list_id = ?`, [id]);
-                        flatItems.forEach((item) => {
-                            db.run('INSERT INTO productsInLists (id, units, product_id, completed, list_id) VALUES (?,?,?,?,?)', [...item.slice(0, 4), insert_id['last_insert_rowid()']], function(err){
-                                if(err) throw err;
-                            });
-                        });
-                        db.all(`SELECT a.id, a.units AS pieces, a.completed, b.id as product_id, b.name, b.description, b.category FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE list_id = ?`, [insert_id['last_insert_rowid()']], function(err,rows){
-                            if(err){return reject(err);}
-                            resolve({
-                                list: {name, state, id: insert_id['last_insert_rowid()'], items: rows.map((item) => ({...item, completed: Boolean(parseInt(item.completed)) }))}
-                            })
-                        });
-                    });
-                });
-        });
-    });
-}
+  const rows = db
+    .prepare(
+      `SELECT a.id, a.units AS pieces, a.completed, b.product_id as product_id, b.name, b.description, b.url, b.category FROM productsInLists a FULL JOIN products b ON a.product_id=b.product_id WHERE list_id = ?`
+    )
+    .all(list_id);
+  return {
+    ...row,
+    items: rows.map((item) => ({
+      ...item,
+      completed: Boolean(parseInt(item.completed)),
+    })),
+  };
+};
 
-const toggleProductInListCompletion = async(db, list_id, id, completed) => {
-    return new Promise(function(resolve,reject){
-        db.all(`UPDATE productsInLists SET completed = ? WHERE id = ?`, [String(completed), id], function(err,rows){
-                if(err){return reject(err);}
-                resolve(rows);
-            });
-    });
-}
+const addOrUpdateListAndProductsInList = (
+  db,
+  { name, state, list_id, items },
+  user_id = 1
+) => {
+  let new_list_id = null;
+  if (!list_id) {
+    const { lastInsertRowid } = db
+      .prepare(
+        `INSERT INTO lists (name, state, updated_at, user_id) VALUES (?,?,?,?)`
+      )
+      .run(name, state, formatDate(new Date()), user_id);
+    new_list_id = lastInsertRowid;
+  } else {
+    const { lastInsertRowid } = db
+      .prepare(
+        `REPLACE INTO lists (name, state, list_id, updated_at, user_id) VALUES (?,?,?,?,?)`
+      )
+      .run(name, state, list_id, formatDate(new Date()), user_id);
+    new_list_id = lastInsertRowid;
 
-const getActiveList = async(db, user_id = 1) => {
-    return new Promise(function(resolve,reject){
-        db.get(`SELECT * FROM lists WHERE user_id = ? AND state = ?`, [user_id, 'active'], function(err,row){
-            if(err){return reject(err);}
-            if(!row) {
-                resolve({});
-                return;
-            }
-            db.all(`SELECT a.id, a.units AS pieces, a.completed, b.id as product_id, b.name, b.category FROM productsInLists a LEFT JOIN products b ON a.product_id=b.id WHERE list_id = ?`, [row.id], function(err,rows){
-                if(err){return reject(err);}
-                resolve({...row, items: rows.map((item) => ({...item, completed: Boolean(parseInt(item.completed)) }))});
-            });
-        });
-    });
-}
+    // delete list products
+    db.prepare(`DELETE FROM productsInLists WHERE list_id = ?`).run(list_id);
+  }
 
-const updateListState = async(db, id, state) => {
-    return new Promise(function(resolve,reject){
-        db.all(`UPDATE lists SET state = ? WHERE id = ?`, [state, id], function(err,rows){
-                if(err){return reject(err);}
-                resolve(rows);
-            });
-    });
-}
+  // add list products
+  items.forEach((item) => {
+    const result = db
+      .prepare(
+        "INSERT INTO productsInLists (id, units, product_id, completed, list_id) VALUES (?,?,?,?,?)"
+      )
+      .run(item.id, item.units, item.product_id, item.completed, new_list_id);
+  });
 
-const getAllLists = async(db, user_id = 1) => {
-    return new Promise(function(resolve,reject){
-        db.all(`SELECT * FROM lists where user_id = ?`, [user_id], function(err,rows){
-            if(err){return reject(err);}
-                resolve(rows);
-            });
-    });
-}
+  const rows = db
+    .prepare(
+      `SELECT a.id, a.units AS pieces, a.completed, b.product_id as product_id, b.name, b.category FROM productsInLists a FULL JOIN products b ON a.product_id=b.product_id WHERE list_id = ?`
+    )
+    .all(new_list_id);
+  console.log(rows, "rows");
+  return {
+    list: {
+      name,
+      state,
+      list_id: new_list_id,
+      items: rows.map((item) => ({
+        ...item,
+        completed: Boolean(parseInt(item.completed)),
+      })),
+    },
+  };
+};
+
+const toggleProductInListCompletion = (db, list_id, id, completed) => {
+  return db
+    .prepare(`UPDATE productsInLists SET completed = ? WHERE id = ?`)
+    .run(String(completed), id);
+};
+
+const getActiveList = (db, user_id = 1) => {
+  const activeList = db
+    .prepare(`SELECT * FROM lists WHERE user_id = ? AND state = ?`)
+    .get(user_id, "active");
+  console.log(activeList, "active list");
+  if (!activeList) {
+    return undefined;
+  }
+  const items = db
+    .prepare(
+      `SELECT a.id, a.units AS pieces, a.completed, b.product_id as product_id, b.name, b.category FROM productsInLists a FULL JOIN products b ON a.product_id=b.product_id WHERE list_id = ?`
+    )
+    .all(activeList.list_id);
+  console.log(items[0], "items");
+  return {
+    ...activeList,
+    items: items.map((item) => ({
+      ...item,
+      completed: Boolean(parseInt(item.completed)),
+    })),
+  };
+};
+
+const updateListState = (db, list_id, state) => {
+  return db
+    .prepare(`UPDATE lists SET state = ? WHERE list_id = ?`)
+    .run(state, list_id);
+};
+
+const getAllLists = (db, user_id = 1) => {
+  return db.prepare(`SELECT * FROM lists where user_id = ?`).all(user_id);
+};
 
 module.exports = {
-    getList,
-    getActiveList,
-    getAllLists,
-    toggleProductInListCompletion,
-    updateListState,
-    addOrUpdateListAndProductsInList
-}
+  getList,
+  getActiveList,
+  getAllLists,
+  toggleProductInListCompletion,
+  updateListState,
+  addOrUpdateListAndProductsInList,
+};

@@ -1,7 +1,9 @@
-const sqlite3 = require('sqlite3');
+const Database = require('better-sqlite3');
+
+const formatDate = require('./util/formatDate');
 const { createUsersTable, createProductsTable, createListsTable, createProductsInListsTable } = require('./queries');
 
-const db = new sqlite3.Database('./emp_database.db');
+const db = new Database('./emp_database.db');
 
 const createTables = async (db) => {
     return new Promise(function(resolve,reject){
@@ -9,8 +11,8 @@ const createTables = async (db) => {
             if (err) {
                 return reject(err);
             }
-            let insert = 'INSERT INTO users (username, password, email) VALUES (?,?,?)';
-            db.run(insert, ["snowy", "iknownothing", "iknownothing@mail.com"]);
+            let insert = 'INSERT INTO users (username, password) VALUES (?,?)';
+            db.run(insert, ["snowy", "iknownothing"]);
         });
         db.run(createProductsTable, (err) => {
             if (err) {
@@ -48,7 +50,12 @@ const createTables = async (db) => {
 
 const createDbTables = async () => {
         try {
-            await createTables(db);
+            // TODO: check if tables exist
+            // await createTables(db);
+            db.prepare(createListsTable).run();
+            db.prepare(createProductsInListsTable).run();
+            db.prepare(createProductsTable).run();
+            db.prepare(createUsersTable).run();
         } catch (err) {
             console.error('Something went wrong!', err);
         }

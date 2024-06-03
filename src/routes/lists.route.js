@@ -1,10 +1,13 @@
 const router = require("express").Router();
+
+const { authorize } = require("../util/authorize");
 const service = require("../services/lists.service");
 const { db } = require("../database");
 
-router.route("/active").get(async (req, res, next) => {
+router.route("/active").get(authorize, async (req, res, next) => {
   try {
-    const result = await service.getActiveList(db);
+    const user_id = req?.session?.user?.id;
+    const result = await service.getActiveList(db, user_id);
     res.status(200).json(result);
   } catch (err) {
     res.status(500);
@@ -13,7 +16,7 @@ router.route("/active").get(async (req, res, next) => {
 
 router
   .route("/:id")
-  .get(async (req, res) => {
+  .get(authorize, async (req, res) => {
     try {
       const result = await service.getList(db, req.params.id);
       res.status(200).json(result);
@@ -22,7 +25,7 @@ router
       res.status(500);
     }
   })
-  .put(async (req, res) => {
+  .put(authorize, async (req, res) => {
     try {
       await service.updateListState(db, req.params.id, req.body.state);
       res.status(200).json({ message: "List has been successfully updated!" });
@@ -32,38 +35,41 @@ router
     }
   });
 
-router.route("/:id/toggle-item-completion").put(async (req, res, next) => {
-  try {
-    await service.toggleProductInListCompletion(
-      db,
-      req.params.id,
-      req.body.id,
-      req.body.completed
-    );
-    res.status(200).json({ message: "Item has been successfully updated!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500);
-  }
-});
+router
+  .route("/:id/toggle-item-completion")
+  .put(authorize, async (req, res, next) => {
+    try {
+      await service.toggleProductInListCompletion(
+        db,
+        req.params.id,
+        req.body.id,
+        req.body.completed
+      );
+      res.status(200).json({ message: "Item has been successfully updated!" });
+    } catch (err) {
+      console.error(err);
+      res.status(500);
+    }
+  });
 
 router
   .route("/")
-  .get(async (req, res, next) => {
+  .get(authorize, async (req, res, next) => {
     try {
-      const result = await service.getAllLists(db);
+      const user_id = req?.session?.user?.id;
+      const result = await service.getAllLists(db, user_id);
       res.status(200).json(result);
     } catch (err) {
       console.error(err);
       res.status(500);
     }
   })
-  .post(async (req, res, next) => {
+  .post(authorize, async (req, res, next) => {
     try {
       const result = await service.addOrUpdateListAndProductsInList(
         db,
         req.body,
-        1
+        req.session?.user?.id
       );
       res.status(200).json(result);
     } catch (err) {

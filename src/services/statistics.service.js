@@ -1,4 +1,4 @@
-const getTopCategories = async (db, user_id = 1) => {
+const getTopCategories = async (db, user_id) => {
   return db
     .prepare(
       `SELECT b.category AS name, COUNT(b.category) * 100 / COUNT(*) AS percent FROM productsInLists a LEFT JOIN products b ON a.product_id=b.product_id WHERE user_id = ? GROUP BY b.category LIMIT 3`
@@ -6,7 +6,7 @@ const getTopCategories = async (db, user_id = 1) => {
     .all(user_id);
 };
 
-const getTopItems = async (db, user_id = 1) => {
+const getTopItems = async (db, user_id) => {
   return db
     .prepare(
       `SELECT b.name, COUNT(b.name) * 100 / COUNT(*) AS percent FROM productsInLists a LEFT JOIN products b ON a.product_id=b.product_id WHERE user_id = ? GROUP BY b.name LIMIT 3`
@@ -15,7 +15,7 @@ const getTopItems = async (db, user_id = 1) => {
 };
 
 // all of this year
-const getMonthlyStatistics = (db, user_id = 1) => {
+const getMonthlyStatistics = (db, user_id) => {
   const year = String(new Date().getFullYear());
   return db
     .prepare(

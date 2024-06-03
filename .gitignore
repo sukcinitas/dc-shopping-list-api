@@ -1,4 +1,5 @@
 node_modules
 emp_database.db
+sessions.db
 *.env
 

@@ -2,23 +2,25 @@
 const createProductsTable =
   "CREATE TABLE IF NOT EXISTS products( \
     product_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
-    name VARCHAR(255) UNIQUE NOT NULL,\
+    name VARCHAR(255) NOT NULL,\
     category VARCHAR(255)  NOT NULL,\
     description TEXT,\
     url VARCHAR(255),\
     deleted_at CURRENT_DATE,\
     user_id INTEGER,\
-    FOREIGN KEY(user_id) REFERENCES users(user_id)\
+    FOREIGN KEY(user_id) REFERENCES users(user_id),\
+    UNIQUE(name, user_id)\
 )";
 
 const createListsTable =
   "CREATE TABLE IF NOT EXISTS lists( \
     list_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
-    name VARCHAR(255) UNIQUE NOT NULL,\
+    name VARCHAR(255) NOT NULL,\
     state VARCHAR(255) NOT NULL,\
     user_id INTEGER,\
     updated_at INTEGER,\
     FOREIGN KEY(user_id) REFERENCES users(user_id)\
+    UNIQUE(name, user_id)\
 )";
 
 const createProductsInListsTable =

@@ -20,7 +20,7 @@ const getList = (db, list_id) => {
 const addOrUpdateListAndProductsInList = (
   db,
   { name, state, list_id, items },
-  user_id = 1
+  user_id
 ) => {
   let new_list_id = null;
   if (!list_id) {
@@ -56,7 +56,6 @@ const addOrUpdateListAndProductsInList = (
       `SELECT a.id, a.units AS pieces, a.completed, b.product_id as product_id, b.name, b.category FROM productsInLists a FULL JOIN products b ON a.product_id=b.product_id WHERE list_id = ?`
     )
     .all(new_list_id);
-  console.log(rows, "rows");
   return {
     list: {
       name,
@@ -76,11 +75,10 @@ const toggleProductInListCompletion = (db, list_id, id, completed) => {
     .run(String(completed), id);
 };
 
-const getActiveList = (db, user_id = 1) => {
+const getActiveList = (db, user_id) => {
   const activeList = db
     .prepare(`SELECT * FROM lists WHERE user_id = ? AND state = ?`)
     .get(user_id, "active");
-  console.log(activeList, "active list");
   if (!activeList) {
     return undefined;
   }
@@ -89,7 +87,6 @@ const getActiveList = (db, user_id = 1) => {
       `SELECT a.id, a.units AS pieces, a.completed, b.product_id as product_id, b.name, b.category FROM productsInLists a FULL JOIN products b ON a.product_id=b.product_id WHERE list_id = ?`
     )
     .all(activeList.list_id);
-  console.log(items[0], "items");
   return {
     ...activeList,
     items: items.map((item) => ({
@@ -105,7 +102,7 @@ const updateListState = (db, list_id, state) => {
     .run(state, list_id);
 };
 
-const getAllLists = (db, user_id = 1) => {
+const getAllLists = (db, user_id) => {
   return db.prepare(`SELECT * FROM lists where user_id = ?`).all(user_id);
 };
 

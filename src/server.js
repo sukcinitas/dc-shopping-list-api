@@ -32,6 +32,7 @@ app.use(
       process.env.NODE_ENV === "production"
         ? process.env.ORIGIN
         : "http://localhost:4000",
+    credentials: true,
   })
 );
 

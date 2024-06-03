@@ -1,5 +1,4 @@
 node_modules
-emp_database.db
-sessions.db
+*.db
 *.env
 

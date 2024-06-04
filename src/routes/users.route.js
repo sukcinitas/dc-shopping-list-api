@@ -20,25 +20,39 @@ router.post("/register", async (req, res, next) => {
   }
 });
 
-router.post("/login", async (req, res, next) => {
-  try {
-    const { username, password } = req.body;
-    const user = service.getUserByUsername(db, username);
-    if (user && comparePassword(password, user.password)) {
-      req.session.save(() => {
-        req.session.user = {
-          id: user.user_id,
-        };
-      });
-      res.status(200).end();
-    } else {
-      throw new Error("User credentials are incorrect!");
+router
+  .route("/login")
+  .get(async (req, res, next) => {
+    try {
+      if (!req.session.user?.id) {
+        return res.status(404).json("User not found!");
+      }
+      const { username, user_id } = service.getUser(db, req.session.user.id);
+      return res.status(200).json({ username, user_id });
+    } catch (err) {
+      console.log(err);
+      res.status(500).end();
     }
-  } catch (err) {
-    console.error(err);
-    res.status(500).json(err.message);
-  }
-});
+  })
+  .post(async (req, res, next) => {
+    try {
+      const { username, password } = req.body;
+      const user = service.getUserByUsername(db, username);
+      if (user && comparePassword(password, user.password)) {
+        req.session.save(() => {
+          req.session.user = {
+            id: user.user_id,
+          };
+        });
+        res.status(200).end();
+      } else {
+        throw new Error("User credentials are incorrect!");
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).json(err.message);
+    }
+  });
 
 router.get("/logout", async (req, res, next) => {
   try {

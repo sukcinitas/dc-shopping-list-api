@@ -1,5 +1,5 @@
-const getUser = (db, id) => {
-  return db.prepare(`SELECT * FROM users where id = ?`).get(id);
+const getUser = (db, user_id) => {
+  return db.prepare(`SELECT * FROM users where user_id = ?`).get(user_id);
 };
 
 const getUserByUsername = (db, username) => {

@@ -9,7 +9,7 @@ const createProductsTable =
     deleted_at CURRENT_DATE,\
     user_id INTEGER,\
     FOREIGN KEY(user_id) REFERENCES users(user_id),\
-    UNIQUE(name, user_id)\
+    UNIQUE(name, user_id, deleted_at)\
 )";
 
 const createListsTable =
@@ -20,7 +20,6 @@ const createListsTable =
     user_id INTEGER,\
     updated_at INTEGER,\
     FOREIGN KEY(user_id) REFERENCES users(user_id)\
-    UNIQUE(name, user_id)\
 )";
 
 const createProductsInListsTable =

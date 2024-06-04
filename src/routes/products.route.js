@@ -61,7 +61,7 @@ router
     try {
       const user_id = req?.session?.user?.id;
       const result = await service.addProduct(db, req.body, user_id);
-      res.status(200).json({ id: result.lastInsertRowid });
+      res.status(200).json({ product_id: result.lastInsertRowid });
     } catch (err) {
       console.error(err);
       if (err.errno === 19) {

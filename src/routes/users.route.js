@@ -7,16 +7,22 @@ router.post("/register", async (req, res, next) => {
   try {
     const { username, password } = req.body;
     const hashedPassword = hashPassword(password);
-    const ans = await service.register(db, username, hashedPassword);
-    res.status(200).json(ans);
+    const { lastInsertRowid: user_id } = await service.register(
+      db,
+      username,
+      hashedPassword
+    );
+    const result = await service.getUser(db, user_id);
+    res
+      .status(200)
+      .json({ username: result.username, user_id: result.user_id });
   } catch (err) {
-    console.error(err);
+    console.error(err, err.code);
 
-    let message = "";
-    if (err?.errno === 19) {
-      message = "Username is already in use!";
+    if (err?.code === "SQLITE_CONSTRAINT_UNIQUE") {
+      return res.status(409).json("Username is already in use!");
     }
-    res.status(500).json(message);
+    res.status(500).end();
   }
 });
 
@@ -44,7 +50,8 @@ router
             id: user.user_id,
           };
         });
-        res.status(200).end();
+        const { username, user_id } = user;
+        res.status(200).json({ username, user_id });
       } else {
         throw new Error("User credentials are incorrect!");
       }

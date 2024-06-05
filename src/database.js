@@ -3,7 +3,7 @@ const Database = require("better-sqlite3");
 const userService = require("./services/users.service");
 const listService = require("./services/lists.service");
 const { hashPassword } = require("./util/passwordHashing");
-const formatDate = require("./util/formatDate");
+
 const {
   createUsersTable,
   createProductsTable,

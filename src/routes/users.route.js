@@ -53,11 +53,11 @@ router
         const { username, user_id } = user;
         res.status(200).json({ username, user_id });
       } else {
-        throw new Error("User credentials are incorrect!");
+        res.status(401).json({ message: "User credentials are incorrect!" });
       }
     } catch (err) {
       console.error(err);
-      res.status(500).json(err.message);
+      res.status(500).json({ message: err.message });
     }
   });
 

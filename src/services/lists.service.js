@@ -45,8 +45,8 @@ const addOrUpdateListAndProductsInList = (
   // add list products
   items.forEach((item) => {
     db.prepare(
-      "INSERT INTO productsInLists (id, units, product_id, completed, list_id) VALUES (?,?,?,?,?)"
-    ).run(item.id, item.units, item.product_id, item.completed, new_list_id);
+      "INSERT INTO productsInLists (units, product_id, completed, list_id) VALUES (?,?,?,?)"
+    ).run(item.units, item.product_id, item.completed, new_list_id);
   });
 
   const rows = db

@@ -1,66 +1,80 @@
-const router = require('express').Router();
-const service = require('../services/products.service');
-const { db } = require('../database');
+const router = require("express").Router();
 
-router.get('/', async (req, res, next) => {
+const { authorize } = require("../util/authorize");
+const service = require("../services/products.service");
+const { db } = require("../database");
+
+router
+  .route("/:id")
+  .put(authorize, async (req, res) => {
     try {
-        const result = await service.getAllProducts(db, 1);
-        res.status(200).json(result);
+      const user_id = req?.session?.user?.id;
+      const result = await service.editProduct(
+        db,
+        req.body,
+        Number(req.params.id),
+        user_id
+      );
+      res.status(200).json({ id: result.lastInsertRowid });
     } catch (err) {
-        console.error(err);
-        res.status(500).end();
+      if (err.errno === 19) {
+        res.status(400).json({
+          message: "Name must be unique!",
+        });
+        return;
+      }
+      res.status(500).json(err.message);
     }
-});
-
-router.get('/:id', async (req, res, next) => {
+  })
+  .delete(authorize, async (req, res) => {
     try {
-        const result = await service.getProduct(db, req.params.id);
-        res.status(200).json(result);
+      await service.deleteProduct(db, req.params.id);
+      res.status(200).json("Successfully deleted!");
     } catch (err) {
-        console.error(err);
-        res.status(500).end();
+      console.error(err);
+      res.status(500).end();
     }
-});
-
-router.post('/', async (req, res) => {
+  })
+  .get(authorize, async (req, res) => {
     try {
-        const result = await service.addProduct(db, req.body);
-        res.status(200).json({ id: result['last_insert_rowid()'] });
+      const result = await service.getProduct(db, req.params.id);
+      res.status(200).json(result);
     } catch (err) {
-        if (err.errno === 19) {
-            res.status(400).json({
-                message: "Name must be unique!"
-            }).end();
-            return;
-        }
-        res.status(500).end();
+      console.error(err);
+      res.status(500).end();
     }
-});
+  });
 
-router.put('/:id', async (req, res) => {
+router
+  .route("/")
+  .get(authorize, async (req, res, next) => {
     try {
-        const result = await service.editProduct(db, req.body, Number(req.params.id));
-        res.status(200).json({ id: result['last_insert_rowid()'] });
+      const user_id = req?.session?.user?.id;
+      const result = await service.getAllProducts(db, user_id);
+      res.status(200).json(result);
     } catch (err) {
-        if (err.errno === 19) {
-            res.status(400).json({
-                message: "Name must be unique!"
-            }).end();
-            return;
-        }
-        res.status(500).end();
+      console.error(err);
+      res.status(500).end();
     }
-});
-
-router.delete('/:id', async (req, res) => {
+  })
+  .post(authorize, async (req, res) => {
     try {
-        await service.deleteProduct(db, req.params.id);
-        res.status(200).end();
+      const user_id = req?.session?.user?.id;
+      const result = await service.addProduct(db, req.body, user_id);
+      res.status(200).json({ product_id: result.lastInsertRowid });
     } catch (err) {
-        console.error(err);
-        res.status(500);
+      console.error(err);
+      if (err.errno === 19) {
+        res
+          .status(400)
+          .json({
+            message: "Name must be unique!",
+          })
+          .end();
+        return;
+      }
+      res.status(500).end();
     }
-});
-
+  });
 
 module.exports = router;

@@ -1,67 +1,81 @@
-const router = require('express').Router();
-const service = require('../services/lists.service');
-const { db } = require('../database');
+const router = require("express").Router();
 
-// Lists
-router.get('/active', async (req, res, next) => {
-    try {
-        const result = await service.getActiveList(db);
-        res.status(200).json(result);
-    } catch (err) {
-        console.error(err);
-        res.status(500);
-    }
+const { authorize } = require("../util/authorize");
+const service = require("../services/lists.service");
+const { db } = require("../database");
+
+router.route("/active").get(authorize, async (req, res, next) => {
+  try {
+    const user_id = req?.session?.user?.id;
+    const result = await service.getActiveList(db, user_id);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500);
+  }
 });
 
-router.put('/save-list', async (req, res, next) => {
+router
+  .route("/:id")
+  .get(authorize, async (req, res) => {
     try {
-        const result = await service.addOrUpdateListAndProductsInList(db, req.body);
-        res.status(200).json(result);
+      const result = await service.getList(db, req.params.id);
+      res.status(200).json(result);
     } catch (err) {
-        console.error(err);
-        res.status(500);
+      console.error(err);
+      res.status(500);
     }
-});
-
-router.get('/:id', async (req, res, next) => {
+  })
+  .put(authorize, async (req, res) => {
     try {
-        const result = await service.getList(db, req.params.id);
-        res.status(200).json(result);
+      await service.updateListState(db, req.params.id, req.body.state);
+      res.status(200).json({ message: "List has been successfully updated!" });
     } catch (err) {
-        console.error(err);
-        res.status(500);
+      console.error(err);
+      res.status(500);
     }
-});
+  });
 
-router.put('/:id/toggle-item-completion', async (req, res, next) => {
+router
+  .route("/:id/toggle-item-completion")
+  .put(authorize, async (req, res, next) => {
     try {
-        await service.toggleProductInListCompletion(db, req.params.id, req.body.id, req.body.completed);
-        res.status(200).json({message: 'Item has been successfully updated!'});
+      await service.toggleProductInListCompletion(
+        db,
+        req.params.id,
+        req.body.id,
+        req.body.completed
+      );
+      res.status(200).json({ message: "Item has been successfully updated!" });
     } catch (err) {
-        console.error(err);
-        res.status(500);
+      console.error(err);
+      res.status(500);
     }
-});
+  });
 
-
-router.put('/:id', async (req, res, next) => {
+router
+  .route("/")
+  .get(authorize, async (req, res, next) => {
     try {
-        await service.updateListState(db, req.params.id, req.body.state);
-        res.status(200).json({message: 'List has been successfully updated!'});
+      const user_id = req?.session?.user?.id;
+      const result = await service.getAllLists(db, user_id);
+      res.status(200).json(result);
     } catch (err) {
-        console.error(err);
-        res.status(500);
+      console.error(err);
+      res.status(500);
     }
-});
-
-router.get('/', async (req, res, next) => {
+  })
+  .post(authorize, async (req, res, next) => {
     try {
-        const result = await service.getAllLists(db);
-        res.status(200).json(result);
+      const result = await service.addOrUpdateListAndProductsInList(
+        db,
+        req.body,
+        req.session?.user?.id
+      );
+      res.status(200).json(result);
     } catch (err) {
-        console.error(err);
-        res.status(500);
+      console.error(err);
+      res.status(500);
     }
-});
+  });
 
 module.exports = router;

@@ -1,59 +1,40 @@
-const formatDate = require('../util/formatDate');
+const formatDate = require("../util/formatDate");
 
-const getProduct = async (db, id) => {
-    return new Promise(function(resolve,reject){
-        db.get(`SELECT * FROM products WHERE id = ?`, [id], function(err,rows){
-                if(err){return reject(err);}
-                resolve(rows);
-            });
-    });
-}
+const getProduct = (db, id) => {
+  return db.prepare(`SELECT * FROM products WHERE product_id = ?`).get(id);
+};
 
-const getAllProducts = async (db, id) => {
-    return new Promise(function(resolve,reject){
-        db.all(`SELECT * FROM products WHERE user_id = ?`, [id], function(err,rows){
-                if(err){return reject(err);}
-                resolve(rows);
-            });
-    });
-}
+const getAllProducts = (db, id) => {
+  return db.prepare(`SELECT * FROM products WHERE user_id = ?`).all(id);
+};
 
-const addProduct = async(db, { name, url, description, category }, user_id = 1) => {
-    return new Promise(function(resolve,reject){
-        db.all(`INSERT INTO products (name, category, description, url, user_id) VALUES (?,?,?,?,?)`, [name, category, description, url, user_id], function(err,rows){
-                if(err){return reject(err);}
-                db.get('SELECT last_insert_rowid()', function(err, id) {
-                    if(err){return reject(err);}
-                    resolve(id);
-                })
-            });
-    });
-}
+const addProduct = (db, { name, url, description, category }, user_id) => {
+  return db
+    .prepare(
+      `INSERT INTO products (name, category, description, url, user_id) VALUES (?,?,?,?,?)`
+    )
+    .run(name, category, description, url, user_id);
+};
 
-const editProduct = async(db, { name, url, description, category }, id, user_id = 1) => {
-    return new Promise(function(resolve,reject){
-        db.all(`UPDATE products SET name = ?, category = ?, description = ?, url = ?, user_id = ? WHERE id = ?`, [name, category, description, url, user_id, id], function(err,rows){
-                if(err){return reject(err);}
-                    resolve(id);
-            });
-    });
-}
+const editProduct = (db, { name, url, description, category }, id, user_id) => {
+  return db
+    .prepare(
+      `UPDATE products SET name = ?, category = ?, description = ?, url = ?, user_id = ? WHERE product_id = ?`
+    )
+    .run(name, category, description, url, user_id, id);
+};
 
-const deleteProduct = async(db, id) => {
-    const date = formatDate(new Date());
-    return new Promise(function(resolve,reject){
-        db.all(`UPDATE products SET deleted_at = ? WHERE id = ?`, [date, id], function(err,rows){
-                if(err){return reject(err);}
-                resolve(rows);
-            });
-    });
-}
-
+const deleteProduct = (db, id) => {
+  const date = formatDate(new Date());
+  return db
+    .prepare(`UPDATE products SET deleted_at = ? WHERE product_id = ?`)
+    .run(date, id);
+};
 
 module.exports = {
-    getProduct,
-    getAllProducts,
-    addProduct,
-    editProduct,
-    deleteProduct,
-}
+  getProduct,
+  getAllProducts,
+  addProduct,
+  editProduct,
+  deleteProduct,
+};

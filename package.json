@@ -7,14 +7,20 @@
     "dev": "cd src && nodemon --trace-warnings --exec babel-node server.js",
     "start": "cd src && node server.js"
   },
+  "engines": {
+    "node": "18.20.3"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.0.0",
+    "better-sqlite3-session-store": "^0.1.0",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "sqlite3": "^5.0.2"
+    "express-session": "^1.18.0"
   },
   "devDependencies": {
     "@babel/core": "^7.15.5",

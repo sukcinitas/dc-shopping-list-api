@@ -1,6 +1,6 @@
 # DC Shopping List Api
 
-Complementary API to [dc-shopping-list](https://github.com/sukcinitas/dc-shopping-list) app which you can try out [here](https://tickitoff.netlify.app/login).
+Complementary API to [dc-shopping-list](https://github.com/sukcinitas/dc-shopping-list) app which you can try out [here](https://list-it-off.netlify.app/).
 Note: It may take some time for the sleeping app to wake up.
 
 ---

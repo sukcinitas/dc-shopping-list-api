@@ -21,6 +21,11 @@ app.use(
         intervalMs: 900000, //ms = 15min
       },
     }),
+    cookie: {
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    },
     secret: "millenium mambo",
     resave: false,
     saveUninitialized: true,

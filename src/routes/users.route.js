@@ -45,11 +45,10 @@ router
       const { username, password } = req.body;
       const user = service.getUserByUsername(db, username);
       if (user && comparePassword(password, user.password)) {
-        req.session.save(() => {
-          req.session.user = {
-            id: user.user_id,
-          };
-        });
+        req.session.user = {
+          id: user.user_id,
+        };
+        await req.session.save();
         const { username, user_id } = user;
         res.status(200).json({ username, user_id });
       } else {

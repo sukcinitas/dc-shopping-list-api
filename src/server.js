@@ -18,17 +18,17 @@ app.use(
       client: sessionDatabase,
       expired: {
         clear: true,
-        intervalMs: 900000, //ms = 15min
+        intervalMs: 9000000, //ms = 150min
       },
     }),
     cookie: {
-      secure: true,
-      sameSite: "none",
-      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
     },
     secret: "millenium mambo",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
   })
 );
 app.use(

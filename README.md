@@ -1,7 +1,9 @@
 # DC Shopping List Api
 
 Complementary API to [dc-shopping-list](https://github.com/sukcinitas/dc-shopping-list) app which you can try out [here](https://list-it-off.netlify.app/).
-Note: It may take some time for the sleeping app to wake up.
+
+Note: It may take some time for the sleeping app to wake up and you might need to enable third party cookies for you to explore its full features. Currently it is hosted across two different domains and session cookie is cross-site, which is not ideal.
+Note (to myself): host differenly before 2025 when Google will remove support for third-party cookies or I'm toast.
 
 ---
 

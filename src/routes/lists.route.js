@@ -6,7 +6,7 @@ const { db } = require("../database");
 
 router.route("/active").get(authorize, async (req, res, next) => {
   try {
-    const user_id = req?.session?.user?.id;
+    const user_id = req?.session?.user_id;
     const result = await service.getActiveList(db, user_id);
     res.status(200).json(result);
   } catch (err) {
@@ -56,7 +56,7 @@ router
   .route("/")
   .get(authorize, async (req, res, next) => {
     try {
-      const user_id = req?.session?.user?.id;
+      const user_id = req?.session?.user_id;
       const result = await service.getAllLists(db, user_id);
       res.status(200).json(result);
     } catch (err) {
@@ -66,10 +66,10 @@ router
   })
   .post(authorize, async (req, res, next) => {
     try {
-      const result = await service.addOrUpdateListAndProductsInList(
+      const result = service.addOrUpdateListAndProductsInList(
         db,
         req.body,
-        req.session?.user?.id
+        req.session?.user_id
       );
       res.status(200).json(result);
     } catch (err) {

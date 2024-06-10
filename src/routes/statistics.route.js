@@ -6,7 +6,7 @@ const { db } = require("../database");
 
 router.get("/top-categories", authorize, async (req, res, next) => {
   try {
-    const user_id = req?.session?.user?.id;
+    const user_id = req?.session?.user_id;
     const ans = await service.getTopCategories(db, user_id);
     res.status(200).json(ans);
   } catch (err) {
@@ -17,7 +17,7 @@ router.get("/top-categories", authorize, async (req, res, next) => {
 
 router.get("/top-items", authorize, async (req, res, next) => {
   try {
-    const user_id = req?.session?.user?.id;
+    const user_id = req?.session?.user_id;
     const ans = await service.getTopItems(db, user_id);
     res.status(200).json(ans);
   } catch (err) {
@@ -28,7 +28,7 @@ router.get("/top-items", authorize, async (req, res, next) => {
 
 router.get("/monthly-statistics", authorize, async (req, res, next) => {
   try {
-    const user_id = req?.session?.user?.id;
+    const user_id = req?.session?.user_id;
     const ans = await service.getMonthlyStatistics(db, user_id);
     res.status(200).json(ans);
   } catch (err) {

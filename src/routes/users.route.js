@@ -30,13 +30,12 @@ router
   .route("/login")
   .get(async (req, res, next) => {
     try {
-      if (!req.session.user?.id) {
-        return res.status(404).json("User not found!");
+      if (!req.session?.user_id) {
+        return res.status(404).send("User not found!");
       }
-      const { username, user_id } = service.getUser(db, req.session.user.id);
+      const { username, user_id } = service.getUser(db, req.session.user_id);
       return res.status(200).json({ username, user_id });
     } catch (err) {
-      console.log(err);
       res.status(500).end();
     }
   })
@@ -45,10 +44,8 @@ router
       const { username, password } = req.body;
       const user = service.getUserByUsername(db, username);
       if (user && comparePassword(password, user.password)) {
-        req.session.user = {
-          id: user.user_id,
-        };
-        await req.session.save();
+        req.session.user_id = user.user_id;
+        req.session.save((err) => console.error(err));
         const { username, user_id } = user;
         res.status(200).json({ username, user_id });
       } else {

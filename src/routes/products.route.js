@@ -8,7 +8,7 @@ router
   .route("/:id")
   .put(authorize, async (req, res) => {
     try {
-      const user_id = req?.session?.user?.id;
+      const user_id = req?.session?.user_id;
       const result = await service.editProduct(
         db,
         req.body,
@@ -49,7 +49,7 @@ router
   .route("/")
   .get(authorize, async (req, res, next) => {
     try {
-      const user_id = req?.session?.user?.id;
+      const user_id = req?.session?.user_id;
       const result = await service.getAllProducts(db, user_id);
       res.status(200).json(result);
     } catch (err) {
@@ -59,7 +59,7 @@ router
   })
   .post(authorize, async (req, res) => {
     try {
-      const user_id = req?.session?.user?.id;
+      const user_id = req?.session?.user_id;
       const result = await service.addProduct(db, req.body, user_id);
       res.status(200).json({ product_id: result.lastInsertRowid });
     } catch (err) {

@@ -12,8 +12,10 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.set("trust proxy", 1);
 app.use(
   session({
+    name: "kernel_panic",
     store: new SqliteStore({
       client: sessionDatabase,
       expired: {
@@ -22,9 +24,10 @@ app.use(
       },
     }),
     cookie: {
-      httpOnly: true,
-      sameSite: "lax",
+      httpOnly: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       secure: process.env.NODE_ENV === "production",
+      maxAge: 9000000,
     },
     secret: "millenium mambo",
     resave: false,
